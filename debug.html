@@ -23,15 +23,18 @@
             max-width: 600px;
             width: 100%;
         }
-        button {
-            padding: 10px 20px;
+        button, select, input {
+            padding: 10px;
             margin: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
             background-color: #007bff;
             color: white;
-            border: none;
             cursor: pointer;
-            font-size: 16px;
-            border-radius: 5px;
+            border: none;
         }
         button:hover {
             background-color: #0056b3;
@@ -71,10 +74,25 @@
 
     <div class="container">
         <h2>API Debugging Panel</h2>
-        <button id="testApiButton">Fetch Posts</button>
+        
+        <!-- Dropdown for search type -->
+        <select id="searchType">
+            <option value="_tag">Tags</option>
+            <option value="title">Title</option>
+            <option value="body">Body</option>
+            <option value="id">ID</option>
+        </select>
+        
+        <!-- Search input field -->
+        <input type="text" id="searchQuery" placeholder="Enter search value..." />
+        
+        <!-- Buttons -->
+        <button id="searchButton">Search</button>
+        <button id="testApiButton">Fetch All Posts</button>
         <button id="clearStorageButton">Clear Storage & Logout</button>
+        
         <h3>Status:</h3>
-        <p id="status">Press the button to fetch posts.</p>
+        <p id="status">Press a button to fetch posts.</p>
     </div>
 
     <div class="posts-container" id="posts-container">

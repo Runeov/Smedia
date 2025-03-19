@@ -1,4 +1,5 @@
-const NOROFF_API_URL = "https://v2.api.noroff.dev/social/posts";
+const BASE_API_URL = "https://v2.api.noroff.dev/social/posts";
+const AUTHOR_API_URL = "https://v2.api.noroff.dev/social/profiles"; // API for author details
 
 function save(key, value) {
     console.log(`Saving to localStorage: ${key}`, value);
@@ -15,9 +16,8 @@ function remove(key) {
     localStorage.removeItem(key);
 }
 
-// Function to Fetch Posts
-// Function to Fetch and Display Posts
-async function fetchPosts() {
+// Function to Fetch Posts from API
+async function fetchPosts(queryType = "", queryValue = "") {
     const accessToken = get("token");
     const apiKey = get("apiKey");
 
@@ -29,7 +29,21 @@ async function fetchPosts() {
         return;
     }
 
-    console.log("Fetching posts with token and API key...");
+    let apiUrl = BASE_API_URL;
+
+    // Adjust API endpoint based on search type
+    if (queryType === "id") {
+        apiUrl += `/${queryValue}?_author=true&_comments=true&_reactions=true`; // Fetch extra data
+    } else if (queryType === "_tag") {
+        apiUrl += `?_tag=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`; // Include extra data
+    } else if (queryType === "title" || queryType === "body") {
+        apiUrl = `${BASE_API_URL}/search?q=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`; // Include extra data
+    } else if (queryType === "author") {
+        apiUrl = `${AUTHOR_API_URL}/${queryValue}?_posts=true&_author=true&_comments=true&_reactions=true`; // Fetch author's posts with extra data
+    }
+
+    console.log(`Fetching posts with query: ${queryType} = ${queryValue || "All Posts"}...`);
+    console.log(`Final API Request URL: ${apiUrl}`);
 
     const options = {
         headers: {
@@ -39,9 +53,9 @@ async function fetchPosts() {
     };
 
     try {
-        console.log("Sending GET request to:", NOROFF_API_URL);
+        console.log("Sending GET request to:", apiUrl);
 
-        const response = await fetch(NOROFF_API_URL, options);
+        const response = await fetch(apiUrl, options);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -55,10 +69,15 @@ async function fetchPosts() {
 
         let posts = data.data || data; // Adjust depending on API response format
 
+        // Ensure response is an array before processing
         if (!Array.isArray(posts)) {
-            console.error("Unexpected response format. Expected an array, got:", posts);
-            document.getElementById("responseLog").textContent = "Error: Unexpected API response format.";
-            return;
+            if (queryType === "id" || queryType === "author") {
+                posts = [posts]; // Convert single object to array for display
+            } else {
+                console.error("Unexpected response format. Expected an array, got:", posts);
+                document.getElementById("responseLog").textContent = "Error: Unexpected API response format.";
+                return;
+            }
         }
 
         displayPosts(posts);
@@ -69,13 +88,17 @@ async function fetchPosts() {
     }
 }
 
-// Function to Display Posts in a Styled Div
+// Function to Display Posts with Correct Clickable Author Profile Link
 function displayPosts(posts) {
     const postsContainer = document.getElementById("responseLog");
-    postsContainer.innerHTML = ""; // Clear previous posts
+
+    // Clear previous content before displaying new results
+    postsContainer.innerHTML = "";
+    document.getElementById("status").textContent = "Loading new posts...";
 
     if (posts.length === 0) {
         postsContainer.innerHTML = "<p>No posts available.</p>";
+        document.getElementById("status").textContent = "No posts found.";
         return;
     }
 
@@ -83,10 +106,22 @@ function displayPosts(posts) {
         const postElement = document.createElement("div");
         postElement.classList.add("post");
 
+        // Ensure the author name exists before creating the profile link
+        let authorProfileLink = "Unknown";
+        if (post.author?.name) {
+            const encodedAuthorName = encodeURIComponent(post.author.name.trim()); // Ensure proper encoding
+            authorProfileLink = `<a href="profile.html?id=${encodedAuthorName}" 
+                style="color: blue; text-decoration: underline;">
+                ${post.author.name}
+            </a>`;
+        }
+
         postElement.innerHTML = `
             <h3>${post.title || "Untitled Post"}</h3>
             <p>${post.body || "No content available."}</p>
-            <small>By: ${post.author?.name || "Unknown"}</small>
+            <p><strong>By:</strong> ${authorProfileLink}</p>
+            <p><strong>Reactions:</strong> ${post._count?.reactions || 0}</p>
+            <p><strong>Comments:</strong> ${post._count?.comments || 0}</p>
         `;
 
         postsContainer.appendChild(postElement);
@@ -95,5 +130,30 @@ function displayPosts(posts) {
     document.getElementById("status").textContent = "Posts loaded successfully!";
 }
 
-// Attach Event Listener to Fetch Posts Button
-document.getElementById("testApiButton").addEventListener("click", fetchPosts);
+// Function to Get User Search Criteria and Fetch Posts
+function searchByCriteria() {
+    const searchType = document.getElementById("searchType").value;
+    const searchQuery = document.getElementById("searchQuery").value.trim();
+
+    if (!searchQuery) {
+        alert("Please enter a value to search.");
+        return;
+    }
+
+    fetchPosts(searchType, searchQuery);
+}
+
+// Function to Clear Storage and Logout
+function clearStorageAndLogout() {
+    remove("token");
+    remove("apiKey");
+    remove("user");
+    console.log("Storage cleared. Redirecting to login...");
+    alert("Storage cleared. Redirecting to login.");
+    window.location.href = "/index.html";
+}
+
+// Attach Event Listeners
+document.getElementById("testApiButton").addEventListener("click", () => fetchPosts());
+document.getElementById("searchButton").addEventListener("click", searchByCriteria);
+document.getElementById("clearStorageButton").addEventListener("click", clearStorageAndLogout);
