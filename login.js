@@ -29,60 +29,70 @@ function loginListener() {
     }
 }
 
-// Function to handle form submission
 async function handleLogin(event) {
-    event.preventDefault(); // Prevent default form submission
+    event.preventDefault();
 
     const form = event.target;
     const data = new FormData(form);
     const email = data.get('email');
     const password = data.get('password');
 
-    console.log('Attempting login with:', { email, password: '*****' }); // Mask password in logs
+    console.log('Attempting login with:', { email, password: '*****' });
 
     try {
         const bodyData = { email, password };
-        console.log('Sending login request to:', API_SOCIAL_URL);
-
         const response = await fetch(API_SOCIAL_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(bodyData)
         });
 
-        console.log('Login response received:', response);
-
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Login failed. Response:', errorText);
-            throw new Error(`Login failed. Status: ${response.status}`);
+            throw new Error('Login failed. Check your credentials.');
         }
 
         const responseData = await response.json();
-        console.log('Login successful! Response data:', responseData);
+        console.log('Login successful!', responseData);
 
         const { accessToken, name } = responseData.data;
 
         if (!accessToken) {
-            console.error('No access token received.');
-            throw new Error('No access token provided in response.');
+            throw new Error('No access token received.');
         }
 
         save('token', accessToken);
         save('user', name);
+
         console.log('Token and user data saved successfully.');
 
-        // Test API authorization immediately after login
-        await testAuthorization();
+        // Fetch API Key
+        const apiKeyResponse = await fetch(API_KEY_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({})
+        });
 
-        location.href = '/dashboard.html/'; // Redirect user after successful login
+        if (!apiKeyResponse.ok) {
+            throw new Error(`API Key request failed. Status: ${apiKeyResponse.status}`);
+        }
+
+        const apiKeyData = await apiKeyResponse.json();
+        const apiKey = apiKeyData.data.key; // Ensure this matches the response format
+
+        save('apiKey', apiKey);
+        console.log("API Key stored:", apiKey);
+
+        location.href = "debug.html"; // Redirect after successful login
     } catch (error) {
         console.error('Login error:', error);
         alert(error.message);
     }
 }
+
+
 
 // Function to test authorization by requesting an API key
 async function testAuthorization() {

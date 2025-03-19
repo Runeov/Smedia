@@ -1,0 +1,99 @@
+const API_KEY_URL = 'https://v2.api.noroff.dev/auth/create-api-key';
+
+// Local Storage Helper Functions
+function save(key, value) {
+    console.log(`Saving to localStorage: ${key}`, value);
+    localStorage.setItem(key, JSON.stringify(value));
+}
+
+function get(key) {
+    console.log(`Retrieving from localStorage: ${key}`);
+    return JSON.parse(localStorage.getItem(key));
+}
+
+function remove(key) {
+    console.log(`Removing from localStorage: ${key}`);
+    localStorage.removeItem(key);
+}
+
+// Function to Test API Manually
+async function testApiCall() {
+    const token = get("token");
+
+    if (!token) {
+        console.error("No token found! Please log in first.");
+        document.getElementById("status").textContent = "Not authenticated. Redirecting...";
+        alert("You are not authenticated. Redirecting to login.");
+        setTimeout(() => {
+            window.location.href = "/index.html"; // Redirect after 2 seconds
+        }, 2000);
+        return;
+    }
+
+    console.log("Using token:", token);
+    document.getElementById("status").textContent = "Sending API request...";
+
+    try {
+        console.log("Sending authorization request to:", API_KEY_URL);
+
+        const response = await fetch(API_KEY_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+        });
+
+        console.log("API Response:", response);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("API request failed. Response:", errorText);
+            document.getElementById("status").textContent = `Error: ${response.status}`;
+            document.getElementById("responseLog").textContent = errorText;
+            throw new Error(`API request failed. Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("API call successful!", data);
+        document.getElementById("status").textContent = "API call successful!";
+        document.getElementById("responseLog").textContent = JSON.stringify(data, null, 2);
+        alert("API call successful! Check console for details.");
+
+    } catch (error) {
+        console.error("API test failed:", error);
+        document.getElementById("status").textContent = "API request failed.";
+        document.getElementById("responseLog").textContent = "Error: " + error.message;
+        alert("API request failed. Check console.");
+    }
+}
+
+// Function to Clear Storage and Logout
+function clearStorageAndLogout() {
+    remove("token");
+    remove("apiKey");
+    remove("user");
+    console.log("Storage cleared. Redirecting to login...");
+    alert("Storage cleared. Redirecting to login.");
+    window.location.href = "/index.html";
+}
+
+// Attach Event Listeners
+document.getElementById("testApiButton").addEventListener("click", testApiCall);
+document.getElementById("clearStorageButton").addEventListener("click", clearStorageAndLogout);
+
+
+
+
+////// HTML Code 
+
+<div class="container">
+        <h2>API Debugging Panel</h2>
+        <button id="testApiButton">Test API Request</button>
+        <button id="clearStorageButton">Clear Storage & Logout</button>
+        <h3>Status:</h3>
+        <p id="status">Press the button to test the API call.</p>
+        <h3>Response Log:</h3>
+        <pre id="responseLog">No response yet.</pre>
+    </div>
