@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Edit Post</h2>
+        <input type="text" id="postTitle" placeholder="Title" />
+        <textarea id="postBody" placeholder="Body"></textarea>
+        <input type="text" id="postTags" placeholder="Tags (comma-separated)">
+        <input type="text" id="postImageUrl" placeholder="Image URL">
+        <input type="text" id="postImageAlt" placeholder="Image Alt Text">
+        
+        <button id="updatePost">Update Post</button>
+        
+        <p id="responseMessage"></p>
+    </div>
+
+    <script type="module" src="post.js"></script>
+
+</body>
+</html>

@@ -14,6 +14,13 @@
             min-height: 100vh;
             background-color: #f4f4f4;
         }
+        .wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
         .container {
             background: white;
             padding: 20px;
@@ -23,12 +30,13 @@
             max-width: 600px;
             width: 100%;
         }
-        button, select, input {
+        button, select, input, textarea {
             padding: 10px;
-            margin: 10px;
+            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 16px;
+            width: calc(100% - 20px);
         }
         button {
             background-color: #007bff;
@@ -68,31 +76,75 @@
             font-size: 12px;
             color: #888;
         }
+        .response {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e0f7fa;
+            border-radius: 5px;
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        .post {
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+        text-align: left;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        cursor: pointer; /* Changes cursor */
+    }
+    .post:hover {
+        background-color: #e8f4ff; /* Light blue hover effect */
+        transform: scale(1.02); /* Slight zoom effect */
+    }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>API Debugging Panel</h2>
-        
-        <!-- Dropdown for search type -->
-        <select id="searchType">
-            <option value="_tag">Tags</option>
-            <option value="title">Title</option>
-            <option value="body">Body</option>
-            <option value="id">ID</option>
-        </select>
-        
-        <!-- Search input field -->
-        <input type="text" id="searchQuery" placeholder="Enter search value..." />
-        
-        <!-- Buttons -->
-        <button id="searchButton">Search</button>
-        <button id="testApiButton">Fetch All Posts</button>
-        <button id="clearStorageButton">Clear Storage & Logout</button>
-        
-        <h3>Status:</h3>
-        <p id="status">Press a button to fetch posts.</p>
+    <div class="wrapper">
+        <!-- API Debugging Panel -->
+        <div class="container">
+            <h2>API Debugging Panel</h2>
+            
+            <!-- Dropdown for search type -->
+            <select id="searchType">
+                <option value="_tag">Tags</option>
+                <option value="title">Title</option>
+                <option value="body">Body</option>
+                <option value="id">ID</option>
+            </select>
+            
+            <!-- Search input field -->
+            <input type="text" id="searchQuery" placeholder="Enter search value..." />
+            
+            <!-- Buttons -->
+            <button id="searchButton">Search</button>
+            <button id="testApiButton">Fetch All Posts</button>
+            <button id="clearStorageButton">Clear Storage & Logout</button>
+            
+            <h3>Status:</h3>
+            <p id="status">Press a button to fetch posts.</p>
+        </div>
+
+        <!-- Create Post Section -->
+        <div class="container">
+            <h2>Create a New Post</h2>
+            <form id="createPostForm">
+                <input type="text" id="postTitle" placeholder="Post Title (Required)" required>
+                <textarea id="postBody" placeholder="Post Body (Optional)"></textarea>
+                <input type="text" id="postTags" placeholder="Tags (Comma-separated, Optional)">
+                <input type="text" id="postImageUrl" placeholder="Image URL (Optional)">
+                <input type="text" id="postImageAlt" placeholder="Image Alt Text (Optional)">
+                <button type="submit">Create Post</button>
+            </form>
+            <div id="postResponse" class="response"></div>
+        </div>
     </div>
 
     <div class="posts-container" id="posts-container">
@@ -100,7 +152,7 @@
         <div id="responseLog">No posts yet.</div>
     </div>
 
-    <script src="debug.js"></script>
+    <script type="module" src="debug.js"></script>
 
 </body>
 </html>

@@ -1,22 +1,12 @@
-const BASE_API_URL = "https://v2.api.noroff.dev/social/posts";
-const AUTHOR_API_URL = "https://v2.api.noroff.dev/social/profiles"; // API for author details
+import { save, get, remove } from "./storage.js";
+import { createPost, getAuthHeaders } from "./createPost.js";
 
-function save(key, value) {
-    console.log(`Saving to localStorage: ${key}`, value);
-    localStorage.setItem(key, JSON.stringify(value));
-}
+import { BASE_API_URL, AUTHOR_API_URL } from "./adress.js";
 
-function get(key) {
-    console.log(`Retrieving from localStorage: ${key}`);
-    return JSON.parse(localStorage.getItem(key));
-}
+// Attach Event Listener for Post Creation
+document.getElementById("createPostForm").addEventListener("submit", createPost);
 
-function remove(key) {
-    console.log(`Removing from localStorage: ${key}`);
-    localStorage.removeItem(key);
-}
-
-// Function to Fetch Posts from API
+// ✅ Fetch Posts Function
 async function fetchPosts(queryType = "", queryValue = "") {
     const accessToken = get("token");
     const apiKey = get("apiKey");
@@ -31,15 +21,14 @@ async function fetchPosts(queryType = "", queryValue = "") {
 
     let apiUrl = BASE_API_URL;
 
-    // Adjust API endpoint based on search type
     if (queryType === "id") {
-        apiUrl += `/${queryValue}?_author=true&_comments=true&_reactions=true`; // Fetch extra data
+        apiUrl += `/${queryValue}?_author=true&_comments=true&_reactions=true`;
     } else if (queryType === "_tag") {
-        apiUrl += `?_tag=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`; // Include extra data
+        apiUrl += `?_tag=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`;
     } else if (queryType === "title" || queryType === "body") {
-        apiUrl = `${BASE_API_URL}/search?q=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`; // Include extra data
+        apiUrl = `${BASE_API_URL}/search?q=${encodeURIComponent(queryValue)}&_author=true&_comments=true&_reactions=true`;
     } else if (queryType === "author") {
-        apiUrl = `${AUTHOR_API_URL}/${queryValue}?_posts=true&_author=true&_comments=true&_reactions=true`; // Fetch author's posts with extra data
+        apiUrl = `${AUTHOR_API_URL}/${queryValue}?_posts=true&_author=true&_comments=true&_reactions=true`;
     }
 
     console.log(`Fetching posts with query: ${queryType} = ${queryValue || "All Posts"}...`);
@@ -67,12 +56,11 @@ async function fetchPosts(queryType = "", queryValue = "") {
         const data = await response.json();
         console.log("Posts fetched successfully:", data);
 
-        let posts = data.data || data; // Adjust depending on API response format
+        let posts = data.data || data;
 
-        // Ensure response is an array before processing
         if (!Array.isArray(posts)) {
             if (queryType === "id" || queryType === "author") {
-                posts = [posts]; // Convert single object to array for display
+                posts = [posts];
             } else {
                 console.error("Unexpected response format. Expected an array, got:", posts);
                 document.getElementById("responseLog").textContent = "Error: Unexpected API response format.";
@@ -88,62 +76,59 @@ async function fetchPosts(queryType = "", queryValue = "") {
     }
 }
 
-// Function to Display Posts with Correct Clickable Author Profile Link
+// Function to Get Search Criteria and Fetch Posts
+function searchByCriteria() {
+    const searchType = document.getElementById("searchType").value;
+    const searchQuery = document.getElementById("searchQuery").value.trim();
+
+    if (!searchQuery) {
+        alert("⚠️ Please enter a search value.");
+        return;
+    }
+
+    console.log(`🔍 Searching for ${searchType}: ${searchQuery}`);
+    fetchPosts(searchType, searchQuery);
+}
+
+// Attach Event Listeners
+document.getElementById("searchButton").addEventListener("click", searchByCriteria);
+// ✅ Display Posts Function
 function displayPosts(posts) {
     const postsContainer = document.getElementById("responseLog");
-
-    // Clear previous content before displaying new results
     postsContainer.innerHTML = "";
-    document.getElementById("status").textContent = "Loading new posts...";
 
-    if (posts.length === 0) {
+    if (!posts.length) {
         postsContainer.innerHTML = "<p>No posts available.</p>";
-        document.getElementById("status").textContent = "No posts found.";
         return;
     }
 
     posts.forEach(post => {
         const postElement = document.createElement("div");
         postElement.classList.add("post");
-
-        // Ensure the author name exists before creating the profile link
-        let authorProfileLink = "Unknown";
-        if (post.author?.name) {
-            const encodedAuthorName = encodeURIComponent(post.author.name.trim()); // Ensure proper encoding
-            authorProfileLink = `<a href="profile.html?id=${encodedAuthorName}" 
-                style="color: blue; text-decoration: underline;">
-                ${post.author.name}
-            </a>`;
-        }
-
         postElement.innerHTML = `
-            <h3>${post.title || "Untitled Post"}</h3>
-            <p>${post.body || "No content available."}</p>
-            <p><strong>By:</strong> ${authorProfileLink}</p>
-            <p><strong>Reactions:</strong> ${post._count?.reactions || 0}</p>
-            <p><strong>Comments:</strong> ${post._count?.comments || 0}</p>
+            <h3>${post.title}</h3>
+            <p>${post.body}</p>
+            <small>💬 ${post._count?.comments || 0} Comments | ❤️ ${post._count?.reactions || 0} Reactions</small>
         `;
+
+        postElement.style.cursor = "pointer";
+        postElement.style.transition = "background-color 0.3s ease";
+        postElement.addEventListener("mouseenter", () => {
+            postElement.style.backgroundColor = "#e8f4ff";
+        });
+        postElement.addEventListener("mouseleave", () => {
+            postElement.style.backgroundColor = "white";
+        });
+
+        postElement.addEventListener("click", () => {
+            window.open(`post.html?id=${post.id}`, "_blank");
+        });
 
         postsContainer.appendChild(postElement);
     });
-
-    document.getElementById("status").textContent = "Posts loaded successfully!";
 }
 
-// Function to Get User Search Criteria and Fetch Posts
-function searchByCriteria() {
-    const searchType = document.getElementById("searchType").value;
-    const searchQuery = document.getElementById("searchQuery").value.trim();
-
-    if (!searchQuery) {
-        alert("Please enter a value to search.");
-        return;
-    }
-
-    fetchPosts(searchType, searchQuery);
-}
-
-// Function to Clear Storage and Logout
+// ✅ Clear Storage & Logout Function
 function clearStorageAndLogout() {
     remove("token");
     remove("apiKey");
