@@ -1,23 +1,38 @@
 const API_SOCIAL_URL = 'https://v2.api.noroff.dev/auth/login';
 const API_KEY_URL = 'https://v2.api.noroff.dev/auth/create-api-key';
 
-// Local Storage Functions
+/**
+ * @description Saves a key-value pair to localStorage.
+ * @param {string} key - The name of the key to store.
+ * @param {any} value - The value to be stored (automatically converted to JSON).
+ */
 function save(key, value) {
     console.log(`Saving to localStorage: ${key}`, value);
     localStorage.setItem(key, JSON.stringify(value));
 }
 
+/**
+ * @description Retrieves a value from localStorage.
+ * @param {string} key - The key of the stored value.
+ * @returns {any} The retrieved value, parsed from JSON.
+ */
 function get(key) {
     console.log(`Retrieving from localStorage: ${key}`);
     return JSON.parse(localStorage.getItem(key));
 }
 
+/**
+ * @description Removes a key-value pair from localStorage.
+ * @param {string} key - The key to remove.
+ */
 function remove(key) {
     console.log(`Removing from localStorage: ${key}`);
     localStorage.removeItem(key);
 }
 
-// Function to add an event listener to the login form
+/**
+ * @description Adds an event listener to the login form to handle user authentication.
+ */
 function loginListener() {
     const form = document.querySelector('form');
 
@@ -29,6 +44,10 @@ function loginListener() {
     }
 }
 
+/**
+ * @description Handles user login by sending credentials to the API.
+ * @param {Event} event - The form submit event.
+ */
 async function handleLogin(event) {
     event.preventDefault();
 
@@ -80,21 +99,21 @@ async function handleLogin(event) {
         }
 
         const apiKeyData = await apiKeyResponse.json();
-        const apiKey = apiKeyData.data.key; // Ensure this matches the response format
+        const apiKey = apiKeyData.data.key;
 
         save('apiKey', apiKey);
         console.log("API Key stored:", apiKey);
 
-        location.href = "debug.html"; // Redirect after successful login
+        location.href = "main.html"; // Redirect after successful login
     } catch (error) {
         console.error('Login error:', error);
         alert(error.message);
     }
 }
 
-
-
-// Function to test authorization by requesting an API key
+/**
+ * @description Tests if the stored token is valid by attempting to fetch an API key.
+ */
 async function testAuthorization() {
     const token = get('token');
 
@@ -113,9 +132,9 @@ async function testAuthorization() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Attach token for authentication
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({}) // Some APIs require an empty object in POST requests
+            body: JSON.stringify({})
         });
 
         console.log('Authorization response received:', response);

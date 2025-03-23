@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h2>Edit Post</h2>
+        <input type="text" id="postTitle" placeholder="Title" />
+        <textarea id="postBody" placeholder="Body"></textarea>
+        <input type="text" id="postTags" placeholder="Tags (comma-separated)">
+        <input type="text" id="postImageUrl" placeholder="Image URL">
+        <input type="text" id="postImageAlt" placeholder="Image Alt Text">
+        
+        <button id="updatePost">Update Post</button>
+        <button id="deletePost" style="background-color: red;">Delete Post</button>
+        <p id="responseMessage"></p>
+    </div>
+
+    <script type="module" src="post.js"></script>
+
+</body>
+</html>

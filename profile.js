@@ -47,8 +47,8 @@ async function fetchAuthorProfile() {
         const author = (await response.json()).data;
         console.log("✅ Author profile fetched:", author);
 
-        document.getElementById("avatar").src = author.avatar.url || "https://via.placeholder.com/100";
-        document.getElementById("banner").src = author.banner.url || "https://via.placeholder.com/500x150";
+        document.getElementById("avatar").src = author.avatar?.url || "https://via.placeholder.com/100";
+        document.getElementById("banner").src = author.banner?.url || "https://via.placeholder.com/500x150";
         document.getElementById("name").textContent = author.name;
         document.getElementById("bio").textContent = author.bio || "No bio available.";
         document.getElementById("email").textContent = author.email || "Not available";
@@ -57,25 +57,31 @@ async function fetchAuthorProfile() {
         document.getElementById("following-count").textContent = `Following: ${author._count?.following || 0}`;
         document.getElementById("followers-count").textContent = `Followers: ${author._count?.followers || 0}`;
 
-        updateFollowButton(author.name);
+        updateFollowButtons(author);
     } catch (error) {
         alert("❌ Error fetching author profile.");
     }
 }
 
-// Function to Follow or Unfollow a User (Fix: Updates State Immediately)
-async function toggleFollow() {
+// ✅ Function to Follow a User
+async function followUser() {
+    await toggleFollowAction("follow");
+}
+
+// ✅ Function to Unfollow a User
+async function unfollowUser() {
+    await toggleFollowAction("unfollow");
+}
+
+// ✅ Function to Handle Follow/Unfollow Requests
+async function toggleFollowAction(action) {
     const authorName = getQueryParam("id");
     if (!authorName) {
         alert("❌ Error: No author name found.");
         return;
     }
 
-    const button = document.getElementById("follow-button");
-    const isFollowing = button.textContent === "Unfollow";
-    const action = isFollowing ? "unfollow" : "follow";
     const apiUrl = `${BASE_API_URL}/${encodeURIComponent(authorName.trim())}/${action}`;
-
     console.log(`🔗 Sending ${action.toUpperCase()} request to: ${apiUrl}`);
 
     try {
@@ -83,71 +89,40 @@ async function toggleFollow() {
             method: "PUT",
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem("token").replace(/"/g, "")}`,
-                "X-Noroff-API-Key": JSON.parse(localStorage.getItem("apiKey")),
+                "X-Noroff-API-Key": JSON.parse(localStorage.getItem("apiKey")) ,
                 "Content-Type": "application/json"
             }
         });
 
-        const responseData = await response.json();
-        console.log(`✅ API Response:`, responseData);
-
         if (!response.ok) {
-            console.error(`❌ Failed to ${action}:`, responseData);
-            alert(`❌ Error: ${responseData.errors ? responseData.errors[0].message : "Unknown error"}`);
-            return;
+            throw new Error(`❌ Failed to ${action}: ${response.status}`);
         }
 
-        // ✅ Update button text immediately
-        button.textContent = isFollowing ? "Follow" : "Unfollow";
-
-        // ✅ Refresh the follow status to reflect the new state
-        await updateFollowButton(authorName);
-
-        // ✅ Update profile stats after following/unfollowing
+        // ✅ Refresh profile data to update follower count
         fetchAuthorProfile();
 
-        alert(`✅ Successfully ${isFollowing ? "unfollowed" : "followed"} ${authorName}`);
-
+        alert(`✅ Successfully ${action === "follow" ? "followed" : "unfollowed"} ${authorName}`);
     } catch (error) {
         console.error("🚨 Error updating follow status:", error);
         alert("❌ Error updating follow status. Check the console for details.");
     }
 }
 
-// Function to Update Follow Button Status (Ensures Correct State)
-async function updateFollowButton(authorName) {
-    const button = document.getElementById("follow-button");
-    button.textContent = "Checking...";
+// ✅ Function to Update Follow & Unfollow Buttons
+async function updateFollowButtons(author) {
+    const followButton = document.getElementById("follow-button");
+    const unfollowButton = document.getElementById("unfollow-button");
 
-    try {
-        const response = await fetch(`${BASE_API_URL}/${encodeURIComponent(authorName)}?_following=true&_followers=true`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token").replace(/"/g, "")}`,
-                "X-Noroff-API-Key": JSON.parse(localStorage.getItem("apiKey"))
-            }
-        });
-
-        if (!response.ok) {
-            console.error(`❌ Error checking follow status: ${response.status}`);
-            button.textContent = "Follow"; // Default to Follow if error
-            return;
-        }
-
-        const data = await response.json();
-        console.log("✅ Follow status fetched:", data);
-
-        if (data.data?.isFollowing) {
-            button.textContent = "Unfollow";
-        } else {
-            button.textContent = "Follow";
-        }
-    } catch (error) {
-        console.error("Error checking follow status:", error);
-        button.textContent = "Follow"; // Default if an error occurs
+    if (!followButton || !unfollowButton) {
+        console.error("❌ Follow/Unfollow buttons not found in DOM.");
+        return;
     }
+
+    followButton.onclick = followUser;
+    unfollowButton.onclick = unfollowUser;
 }
 
-// Function to Fetch and Display All Posts by the Author
+// ✅ Function to Fetch and Display All Posts by the Author
 async function fetchAuthorPosts() {
     console.log("📌 Fetching author's posts...");
 
@@ -205,8 +180,7 @@ async function fetchAuthorPosts() {
     }
 }
 
-// Fetch Profile on Page Load
+// ✅ Fetch Profile on Page Load
 window.onload = async () => {
     await fetchAuthorProfile();
-    await updateFollowButton(getQueryParam("id"));
 };
